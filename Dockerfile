@@ -10,7 +10,7 @@ COPY backup-to-keybase.sh backup-to-keybase.sh
 # In normal cases, this will be overwritten by a bind mount
 RUN \ 
     apt -y update && \
-    apt -y install git make gawk && \
+    apt -y install git make gawk curl && \
     mkdir -p /repos && \
     chmod +x backup-to-keybase.sh
 # Copy relevant user files
