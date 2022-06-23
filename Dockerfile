@@ -4,13 +4,13 @@ WORKDIR /app
 COPY backup-to-keybase.sh backup-to-keybase.sh
 # Run 
 # - updates
-# - install git 
+# - install git, make
 # - create the repos directory
 # - set executable bit for shell script
 # In normal cases, this will be overwritten by a bind mount
 RUN \ 
     apt -y update && \
-    apt -y install git && \
+    apt -y install git make && \
     mkdir -p /repos && \
     chmod +x backup-to-keybase.sh
 # Tell keybase to not create autostart file
