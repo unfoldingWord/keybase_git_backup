@@ -10,11 +10,12 @@ COPY backup-to-keybase.sh backup-to-keybase.sh
 # In normal cases, this will be overwritten by a bind mount
 RUN \ 
     apt -y update && \
-    apt -y install git make && \
+    apt -y install git make gawk && \
     mkdir -p /repos && \
     chmod +x backup-to-keybase.sh
-# Tell keybase to not create autostart file
+# Copy relevant user files
 COPY autostart_created /home/keybase/.config/keybase/autostart_created
+COPY .gitconfig /home/keybase/.gitconfig
 # Set ENV
 ENV KEYBASE_SERVICE=1
 # CMD

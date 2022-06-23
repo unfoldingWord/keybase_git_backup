@@ -20,7 +20,7 @@ get_deleted_files () {
     STATUS_PIPE="$(create_pipe)"
 
     # Get status, replace prefixes, get only deleted files (D)
-    git status -s | awk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | grep "D " > ${STATUS_PIPE} &
+    git status -s | gawk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | grep "D " > ${STATUS_PIPE} &
 
     # Prefix with -, suffix with <br>
     while IFS=$'\n' read line; do
@@ -72,7 +72,7 @@ do
             # Next, update changelog with all changes
             # 1) Build tmp file with all info
             date -u +\#\#\#\ %Y/%m/%d\ %H:%M:%S > $TMP_FILE
-            git status -s | awk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | while IFS=$'\n' read line; do
+            git status -s | gawk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | while IFS=$'\n' read line; do
                 echo "- $line" >> $TMP_FILE
             done
             echo >> $TMP_FILE
