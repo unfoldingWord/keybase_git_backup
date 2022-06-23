@@ -49,7 +49,7 @@ either through a .env file, or by setting them manually
 - `FROM_EMAIL` *(Email of sender)*
 - `FROM_NAME` *(Name of sender)*
 - `REPLY_EMAIL` *(Reply email)*
-- `REPLY_NAME` ()*Name of sender)*
+- `REPLY_NAME` (*Name of sender)*
 
 ## Authors
 
