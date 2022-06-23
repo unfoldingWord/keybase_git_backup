@@ -30,8 +30,9 @@ docker build -t <dockerhub-username>/<repo-name> .
 ### Executing the docker container
 
 ```
-docker run --env-file .env --rm --name keybase-git unfoldingword/keybase_git_backup
+docker run --env-file .env --rm -v /local/path/to/repos:/repos --name keybase-git unfoldingword/keybase_git_backup
 ```
+where `local/path/to/repos` is the location where your git repos are stored.
 
 #### Enviromnment variables
 You need to provide the following environment variables, 
