@@ -1,4 +1,4 @@
-FROM keybaseio/client:6.0.2-slim
+FROM keybaseio/client:6.0.2
 WORKDIR /app
 # Copy in backup script
 COPY backup-to-keybase.sh backup-to-keybase.sh
