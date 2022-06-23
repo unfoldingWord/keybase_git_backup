@@ -20,7 +20,7 @@ get_deleted_files () {
     STATUS_PIPE="$(create_pipe)"
 
     # Get status, replace prefixes, get only deleted files (D)
-    git status -s | awk '{ sub("?", "U", $1); sub("?", "", $1); print $1 " " $2 } ' | grep "D " > ${STATUS_PIPE} &
+    git status -s | awk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | grep "D " > ${STATUS_PIPE} &
 
     # Prefix with -, suffix with <br>
     while IFS=$'\n' read line; do
@@ -72,14 +72,15 @@ do
             # Next, update changelog with all changes
             # 1) Build tmp file with all info
             date -u +\#\#\#\ %Y/%m/%d\ %H:%M:%S > $TMP_FILE
-            git status -s | awk '{ sub("?", "U", $1); sub("?", "", $1); print $1 " " $2 } ' | while IFS=$'\n' read line; do
+            git status -s | awk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | while IFS=$'\n' read line; do
                 echo "- $line" >> $TMP_FILE
             done
             echo >> $TMP_FILE
 
             # 2) Merge temporary file with changelog file, putting the most recent changes (tmp file) at the top
-            touch changelog-$dir.md
-            cat $TMP_FILE changelog-$dir.md > /tmp/changelog_tmp.md && mv /tmp/changelog_tmp.md changelog-$dir.md
+            changelog=changelog-$(basename $dir).md
+            touch $changelog
+            cat $TMP_FILE $changelog > /tmp/changelog_tmp.md && mv /tmp/changelog_tmp.md $changelog
             
             # 3) Remove clutter
             rm $TMP_FILE
