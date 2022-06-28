@@ -40,7 +40,7 @@ send_mail () {
 
     BODY="<p>${file_list}</p>"
 
-    MAILDATA='{"personalizations":[{"to":[{"email": "'${TO_EMAIL}'","name": "'${TO_NAME}'"}],"subject":"'${SUBJECT}'"}],"content": [{"type": "text/html", "value": "'${BODY}'"}],"from":{"email":"'${FROM_EMAIL}'","name":"'${FROM_NAME}'"},"reply_to":{"email":"'${REPLY_EMAIL}'","name":"'${REPLY_NAME}'"}}'
+    MAILDATA='{"personalizations":[{"to":[{"email": "'${TO_EMAIL}'","name": "'${TO_NAME}'"}],"cc":[{"email": "'${CC_EMAIL}'","name": "'${CC_NAME}'"}],"subject":"'${SUBJECT}'"}],"content": [{"type": "text/html", "value": "'${BODY}'"}],"from":{"email":"'${FROM_EMAIL}'","name":"'${FROM_NAME}'"},"reply_to":{"email":"'${REPLY_EMAIL}'","name":"'${REPLY_NAME}'"}}'
 
     #echo $MAILDATA
 
