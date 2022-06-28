@@ -15,7 +15,6 @@ RUN \
     chmod +x backup-to-keybase.sh
 # Copy relevant user files
 COPY autostart_created /home/keybase/.config/keybase/autostart_created
-COPY .gitconfig /home/keybase/.gitconfig
 # Set ENV
 ENV KEYBASE_SERVICE=1
 # CMD

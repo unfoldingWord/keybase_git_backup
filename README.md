@@ -43,6 +43,10 @@ either through a .env file, or by setting them manually
 - `KEYBASE_PAPERKEY` *(a valid Keybase paper key)*
 - `KEYBASE_SERVICE` *(should be 1, but you can omit it, as it has already been hardcoded in the build)*
 
+##### Git settings
+- `GIT_AUTHOR_NAME` *(Your Git username)*
+- `GIT_AUTHOR_EMAIL` *(Your Git email address)*
+
 ##### Sendgrid settings.
 - `SENDGRID_API_KEY` *(Your Sendgrid API key)*
 - `TO_EMAIL` *(Where to send the email to)*

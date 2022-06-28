@@ -30,6 +30,11 @@ get_deleted_files () {
     echo ${my_file_list}
 }
 
+set_git_config () {
+    git config --global user.name "${GIT_AUTHOR_NAME}"
+    git config --global user.email "${GIT_AUTHOR_EMAIL}"
+}
+
 send_mail () {
     # Settings the subject
     # All other variables have to be set through ENV variables!!!
@@ -50,6 +55,8 @@ send_mail () {
         --header 'Content-Type: application/json' \
         --data "${MAILDATA}"
 }
+
+set_git_config
 
 for dir in $VAULTPATH/*
 do
