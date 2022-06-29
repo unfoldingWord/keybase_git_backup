@@ -6,6 +6,25 @@
 VAULTPATH=/repos
 TMP_FILE=/tmp/current_changes.md
 
+# Required environment variables
+##### Keybase settings
+# `KEYBASE_USERNAME` *(your Keybase username)*
+# `KEYBASE_PAPERKEY` *(a valid Keybase paper key)*
+# `KEYBASE_SERVICE` *(should be 1, but you can omit it, as it has already been hardcoded in the build)*
+
+##### Git settings
+# `GIT_AUTHOR_NAME` *(Your Git username)*
+# `GIT_AUTHOR_EMAIL` *(Your Git email address)*
+
+##### Sendgrid settings.
+# `SENDGRID_API_KEY` *(Your Sendgrid API key)*
+# `TO_EMAIL` *(Where to send the email to)*
+# `TO_NAME` *(Name of the addressee)*
+# `FROM_EMAIL` *(Email of sender)*
+# `FROM_NAME` *(Name of sender)*
+# `REPLY_EMAIL` *(Reply email)*
+# `REPLY_NAME` (*Name of sender)*
+
 create_pipe () {
     local STATUS_PIPE=/tmp/status_pipe
     if [ ! -p ${STATUS_PIPE} ]; then
@@ -20,7 +39,7 @@ get_deleted_files () {
     STATUS_PIPE="$(create_pipe)"
 
     # Get status, replace prefixes, get only deleted files (D)
-    git status -s | gawk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | grep "D " > ${STATUS_PIPE} &
+    git status -s | gawk '{ sub("?", "U", $1); sub("?", "", $1); sub("^ ", "", $0); print $0 } ' | grep "^D " > ${STATUS_PIPE} &
 
     # Prefix with -, suffix with <br>
     while IFS=$'\n' read line; do
