@@ -112,7 +112,7 @@ do
             rm $TMP_FILE
             
             # Add, commit and push changes
-            make commit > /tmp/commit.out
+            make commit
 
         fi
     fi
