@@ -3,7 +3,7 @@
 # Warning: This file is piped out via Puppet, do not modify manually
 
 # General settings
-VAULTPATH=/repos
+VAULTPATH=/repos # Needs to be an absolute path!
 TMP_FILE=/tmp/current_changes.md
 
 # Required environment variables
@@ -15,6 +15,9 @@ TMP_FILE=/tmp/current_changes.md
 ##### Git settings
 # `GIT_AUTHOR_NAME` *(Your Git username)*
 # `GIT_AUTHOR_EMAIL` *(Your Git email address)*
+
+# Misc
+# `PATHS_CHANGELOG` *A bash array with the path to each changelog, per repository. This path MUST exist!*
 
 ##### Sendgrid settings.
 # `SENDGRID_API_KEY` *(Your Sendgrid API key)*
@@ -75,6 +78,44 @@ send_mail () {
         --data "${MAILDATA}"
 }
 
+find_in_array () {
+    local array="$1[@]"
+    local seeking=$2
+    for element in "${!array}"; do
+        if [[ $element == "$seeking"* ]]; then
+            echo $element
+            break
+        fi
+    done
+}
+
+get_changelog_path () {
+    eval "arr_paths=${PATHS_CHANGELOG}"
+
+    search_dir=$1
+
+    path=`find_in_array arr_paths ${search_dir}`
+
+    # If the given directory is found in the array, return the corresponding array element.
+    # Otherwise, just return the given directory.
+    if [ "${path}" != "" ]; then 
+        echo ${path}
+    else
+        echo ${search_dir}
+    fi
+}
+
+get_changelog_file () {
+    local dir=$1
+
+    local search_dir=`basename ${dir}`
+
+    local changelog_path=`get_changelog_path ${search_dir}`
+    local changelog=`realpath ../"${changelog_path}/changelog-$(basename $dir).md"`
+
+    echo $changelog
+}
+
 # Configure GIT, so it doesn't complain about missing author/email
 set_git_config
 
@@ -105,7 +146,7 @@ do
             echo >> $TMP_FILE
 
             # 2) Merge temporary file with changelog file, putting the most recent changes (tmp file) at the top
-            changelog=changelog-$(basename $dir).md
+            changelog=`get_changelog_file ${dir}`
             touch $changelog
             cat $TMP_FILE $changelog > /tmp/changelog_tmp.md && mv /tmp/changelog_tmp.md $changelog
             

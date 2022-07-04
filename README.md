@@ -47,6 +47,9 @@ either through a .env file, or by setting them manually
 - `GIT_AUTHOR_NAME` *(Your Git username)*
 - `GIT_AUTHOR_EMAIL` *(Your Git email address)*
 
+##### Misc
+- `PATHS_CHANGELOG` *A bash array with the path to each changelog, per repository. The given path MUST exist!*
+
 ##### Sendgrid settings.
 - `SENDGRID_API_KEY` *(Your Sendgrid API key)*
 - `TO_EMAIL` *(Where to send the email to)*
