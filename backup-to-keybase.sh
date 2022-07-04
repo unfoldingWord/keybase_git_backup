@@ -147,8 +147,8 @@ do
 
             # 2) Merge temporary file with changelog file, putting the most recent changes (tmp file) at the top
             changelog=`get_changelog_file ${dir}`
-            touch $changelog
-            cat $TMP_FILE $changelog > /tmp/changelog_tmp.md && mv /tmp/changelog_tmp.md $changelog
+            touch "${changelog}"
+            cat $TMP_FILE "${changelog}" > /tmp/changelog_tmp.md && mv /tmp/changelog_tmp.md "${changelog}"
             
             # 3) Remove clutter
             rm $TMP_FILE
