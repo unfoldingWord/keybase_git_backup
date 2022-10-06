@@ -14,7 +14,7 @@ A mail with deleted files will be sent to the indicated user.
 
 - Clone this repository
 ```
-git clone git@github.com:unfoldingWord-dev/keybase_git_backup
+git clone git@github.com:unfoldingWord/keybase_git_backup
 ```
 
 - Or pull the docker container from [here](https://hub.docker.com/r/unfoldingword/keybase_git_backup)
