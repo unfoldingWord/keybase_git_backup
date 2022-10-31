@@ -1,0 +1,12 @@
+# Primary
+GitPython==3.1.29
+sendgrid==6.9.7
+python-dotenv==0.21.0
+
+# Secondary
+gitdb==4.0.9
+python-http-client==3.3.7
+starkbank-ecdsa==2.2.0
+
+# Tertiary
+smmap==5.0.0

@@ -1,21 +1,31 @@
-FROM keybaseio/client:6.0.2
+FROM keybaseio/client:6.0.2-python
 WORKDIR /app
+
 # Copy in backup script
-COPY backup-to-keybase.sh backup-to-keybase.sh
-# Run 
+#COPY backup-to-keybase.sh backup-to-keybase.sh
+COPY backup-to-keybase.py backup-to-keybase.py
+COPY requirements.txt requirements.txt
+
+# Run
 # - updates
-# - install git, make
-# - create the repos directory
-# - set executable bit for shell script
-# In normal cases, this will be overwritten by a bind mount
-RUN \ 
+# - install essential programs
+# - create the /repos directory
+#       In normal cases, this will be overwritten by a bind mount
+# - set executable bit for Python program
+
+RUN \
     apt -y update && \
     apt -y install git make gawk curl && \
     mkdir -p /repos && \
-    chmod +x backup-to-keybase.sh
+    chmod +x backup-to-keybase.py
+
+# Install Python requirements
+# Disable caching, to keep Docker image lean
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy relevant user files
 COPY autostart_created /home/keybase/.config/keybase/autostart_created
 # Set ENV
 ENV KEYBASE_SERVICE=1
 # CMD
-CMD /app/backup-to-keybase.sh
+CMD /app/backup-to-keybase.py
