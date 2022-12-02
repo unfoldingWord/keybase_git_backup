@@ -7,6 +7,7 @@ import sendgrid
 import datetime
 from sendgrid.helpers.mail import Mail, Email, To, Content
 import subprocess
+import ast
 
 
 class BackupToKeybase:
@@ -51,27 +52,47 @@ class BackupToKeybase:
 
     def __get_changelog_file(self, full_repo_path):
         reponame = self.__get_repo_from_path(full_repo_path)
-        lst_changelogs = eval(self.__get_env('PATHS_CHANGELOG_PY'))
+        cl_file = 'changelog-' + reponame + '.md'
+
+        # Is it predefined in PATHS_CHANGELOG?
+        # BTW, instead of eval(), I use ast.literal_eval() to safely evaluate a string
+        # ast.literal_eval() only evaluates literal structures, not code.
+        lst_changelogs = ast.literal_eval(self.__get_env('PATHS_CHANGELOG'))
         for path in lst_changelogs:
             if reponame in path:
-                changelog_file = full_repo_path + path.replace(reponame, '') + '/changelog-' + reponame + '.md'
+                changelog_file = full_repo_path + path.replace(reponame, '') + "/" + cl_file
                 return changelog_file
 
-        return None
+        # Maybe we have a repo/Resources/Notes dir?
+        notes_dir = full_repo_path + '/Resources/Notes'
+        if os.path.exists(notes_dir):
+            changelog_file = notes_dir + "/" + cl_file
+            return changelog_file
+
+        # None of these: store it in the root of the repo
+        changelog_file = full_repo_path + "/" + cl_file
+        return changelog_file
 
     def __get_clean_status_list(self, repo):
-        # Cutting and cleaning up git status list for actual usage
+        # Initial cutting and cleaning up of `git status`
         lst_tmp = [item.replace('"', '').lstrip().split(' ') for item in repo.git.status('--porcelain').split('\n')]
 
         idx = 0
         for item in lst_tmp:
-            # ?? means Untracked, so we replace that with U
-            if item[0] == '??':
-                item[0] = 'U'
+            # ?? means Untracked, so when we encounter that, we replace it with U
+            status = 'U' if item[0] == '??' else item[0]
+            # item should only contain 2 elements.
+            # But if filename contains spaces, item will contain > 2 elements. We fix that here.
+            file = ' '.join(item[1:])
 
-            # More than 2 elements means we have a filename with spaces, so we're going to fix that
-            if len(item) > 2:
-                lst_tmp[idx] = [item[0], ' '.join(item[1:])]
+            if int(self.__get_env('FILES_INTERNAL_LINK')) == 1:
+                # If it's a new(Untracked) or Modified markdown file, make it an internal link
+                if (status == 'U' or status == 'M') and file.endswith('.md'):
+                    file = '[[' + file + ']]'
+
+            # Replace item in index with cleaned up values
+            lst_tmp[idx] = [status, file]
+
             idx += 1
 
         # Remove the changelog from the list of changes. Otherwise, we are stuck
@@ -105,8 +126,8 @@ class BackupToKeybase:
 
         # If file does not exist, create first!
         if not os.path.exists(changelog_file):
-            logging.info('Changelog file {} created.'.format(changelog_file))
             fp = open(changelog_file, 'x')
+            logging.info('Changelog file {} created.'.format(changelog_file))
             fp.close()
 
         # Write our changes!
@@ -126,7 +147,7 @@ class BackupToKeybase:
         directories = os.listdir(vault_path)
 
         if len(directories) == 0:
-            self.logger.warning('No directories found in vault path {}'.format(vault_path))
+            self.logger.warning('Vault path {} appears to be empty'.format(vault_path))
 
         for reponame in directories:
             full_repo_path = vault_path + "/" + reponame
@@ -134,9 +155,11 @@ class BackupToKeybase:
             if os.path.isdir(full_repo_path) and not reponame.startswith('.'):
                 # Only when it is a git repo
                 if os.path.exists(full_repo_path + '/.git'):
+                    self.logger.debug('Directory {} appears to be a valid repository'.format(full_repo_path))
                     repo = Repo(full_repo_path)
 
                     if repo.is_dirty(untracked_files=True):
+
                         self.logger.debug('Repo \'{}\' has changes and needs a commit'.format(reponame))
 
                         lst_status = self.__get_clean_status_list(repo)
@@ -178,6 +201,7 @@ class BackupToKeybase:
                             self.__update_changelog(full_repo_path, changes)
 
                             # Secondary commit, for the changelog file itself
+                            # plus push to origin (which is keybase)
                             cl_file = self.__get_changelog_file(full_repo_path).replace(' ', r'\ ')
                             cmd = 'cd {} && git add {} && git commit -m "Changelog update" && git push origin master'. \
                                 format(full_repo_path, cl_file)
