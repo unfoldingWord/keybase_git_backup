@@ -30,18 +30,28 @@ class BackupToKeybase:
         this_logger = logging.getLogger()
         return this_logger
 
-    def __send_mail(self, reponame, lst_deleted_files):
+    def __send_mail_deleted(self, reponame, lst_deleted_files):
         if len(lst_deleted_files) == 0:
             return False
 
         lst_deleted_files = [' '.join(item) for item in lst_deleted_files]
         html_deleted_files = '<ul><li>' + '<li>'.join(lst_deleted_files) + '</ul>'
 
+        subject = 'Files being deleted from Obsidian vault \'{}\''.format(reponame)
+
+        return self.__send_mail(subject, html_deleted_files)
+
+    def __send_mail(self, subject, body):
+
         sg = sendgrid.SendGridAPIClient(api_key=self.__get_env('SENDGRID_API_KEY'))
         from_email = Email(email=self.__get_env('FROM_EMAIL'), name=self.__get_env('FROM_NAME'))
         to_email = To(email=self.__get_env('TO_EMAIL'), name=self.__get_env('TO_NAME'))
-        subject = 'Files being deleted from Obsidian vault \'{}\''.format(reponame)
-        content = Content("text/html", html_deleted_files)
+
+        footer = '<div style="font-size: 0.8em; color: #777777; padding-top: 30px">'
+        footer += 'This message was sent by backup-to-keybase.py'
+        footer += '</div>'
+
+        content = Content("text/html", body + footer)
         mail = Mail(from_email, to_email, subject, content)
         response = sg.client.mail.send.post(request_body=mail.get())
 
@@ -121,8 +131,10 @@ class BackupToKeybase:
         changelog_file = self.__get_changelog_file(full_repo_path)
 
         if not changelog_file:
-            logging.warning('Changelog file could not be determined for {}'.format(full_repo_path))
-            raise FileNotFoundError('Changelog file not found in repo \'{}\' '.format(full_repo_path))
+            message = 'Changelog file could not be determined for repo \'{}\''.format(full_repo_path)
+            logging.warning(message)
+            self.__send_mail('Missing changelog', message)
+            raise FileNotFoundError(message)
 
         # If file does not exist, create first!
         if not os.path.exists(changelog_file):
@@ -169,44 +181,53 @@ class BackupToKeybase:
                         # next commit.
                         if len(lst_status) > 0:
 
-                            self.logger.info('Changes to {} file(s) will be committed'.format(len(lst_status)))
+                            if not os.path.exists(full_repo_path + '/Makefile'):
+                                message = 'Makefile does not exist in repo \'{}\'. '.format(full_repo_path)
+                                message += 'Skipping...'
 
-                            # Send mail about deleted files
-                            lst_deleted = [item for item in lst_status if item[0] == 'D']
-                            if len(lst_deleted) > 0:
-                                # Send a mail with deleted files
-                                if self.__send_mail(reponame, lst_deleted) is False:
-                                    self.logger.warning('Email about deleted files could not be sent')
+                                self.logger.critical(message)
+                                self.__send_mail("Missing makefile", message)
 
-                            # Current changes
-                            date_header = datetime.datetime.now().strftime('### %Y/%m/%d %H:%M:%S')
-                            lst_status = [' '.join(item) for item in lst_status]
-                            md_status = '- ' + '\n- '.join(lst_status)
+                            else:
 
-                            self.__set_git_config(repo)
+                                self.logger.info('Changes to {} file(s) will be committed'.format(len(lst_status)))
 
-                            # Primary commit, for the real changes
-                            subprocess.run('cd {} && make commit'.format(full_repo_path),
-                                           stdout=subprocess.PIPE, shell=True)
+                                # Send mail about deleted files
+                                lst_deleted = [item for item in lst_status if item[0] == 'D']
+                                if len(lst_deleted) > 0:
+                                    # Send a mail with deleted files
+                                    if self.__send_mail_deleted(reponame, lst_deleted) is False:
+                                        self.logger.warning('Email about deleted files could not be sent')
 
-                            # Fetch git hash for just executed commit
-                            git_hash = subprocess.Popen('cd {} && git log -1 --format=format:%H'.format(full_repo_path),
-                                                        stdout=subprocess.PIPE, shell=True).communicate()[0]
+                                # Current changes
+                                date_header = datetime.datetime.now().strftime('### %Y/%m/%d %H:%M:%S')
+                                lst_status = [' '.join(item) for item in lst_status]
+                                md_status = '- ' + '\n- '.join(lst_status)
 
-                            # Update changelog
-                            changes = \
-                                date_header + '\n' + \
-                                md_status + '\n\n' + \
-                                'Commit hash: ' + git_hash.decode('utf-8') + '\n\n'
-                            self.__update_changelog(full_repo_path, changes)
+                                self.__set_git_config(repo)
 
-                            # Secondary commit, for the changelog file itself
-                            # plus push to origin (which is keybase)
-                            cl_file = self.__get_changelog_file(full_repo_path).replace(' ', r'\ ')
-                            cmd = 'cd {} && git add {} && git commit -m "Changelog update" && git push origin master'. \
-                                format(full_repo_path, cl_file)
-                            self.logger.debug('Changelog commit: {}'.format(cmd))
-                            subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+                                # Primary commit, for the real changes
+                                subprocess.run('cd {} && make commit'.format(full_repo_path),
+                                               stdout=subprocess.PIPE, shell=True)
+
+                                # Fetch git hash for just executed commit
+                                git_hash = subprocess.Popen('cd {} && git log -1 --format=format:%H'.format(full_repo_path),
+                                                            stdout=subprocess.PIPE, shell=True).communicate()[0]
+
+                                # Update changelog
+                                changes = \
+                                    date_header + '\n' + \
+                                    md_status + '\n\n' + \
+                                    'Commit hash: ' + git_hash.decode('utf-8') + '\n\n'
+                                self.__update_changelog(full_repo_path, changes)
+
+                                # Secondary commit, for the changelog file itself
+                                # plus push to origin (which is keybase)
+                                cl_file = self.__get_changelog_file(full_repo_path).replace(' ', r'\ ')
+                                cmd = 'cd {} && git add {} && git commit -m "Changelog update" && git push origin master'. \
+                                    format(full_repo_path, cl_file)
+                                self.logger.debug('Changelog commit: {}'.format(cmd))
+                                subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
 
 
 load_dotenv()
