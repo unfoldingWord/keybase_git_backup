@@ -1,8 +1,7 @@
-FROM keybaseio/client:6.0.2-python
+FROM keybaseio/client:6.2.4-python
 WORKDIR /app
 
 # Copy in backup script
-#COPY backup-to-keybase.sh backup-to-keybase.sh
 COPY backup-to-keybase.py backup-to-keybase.py
 COPY requirements.txt requirements.txt
 
