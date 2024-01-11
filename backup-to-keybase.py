@@ -168,11 +168,13 @@ class BackupToKeybase:
                 # Only when it is a git repo
                 if os.path.exists(full_repo_path + '/.git'):
                     self.logger.debug('Directory {} appears to be a valid repository'.format(full_repo_path))
+                    self.logger.info(f'Processing repository {reponame}')
+
                     repo = Repo(full_repo_path)
 
                     if repo.is_dirty(untracked_files=True):
 
-                        self.logger.debug('Repo \'{}\' has changes and needs a commit'.format(reponame))
+                        self.logger.info(f'Repo \'{reponame}\' has changes and needs a commit')
 
                         lst_status = self.__get_clean_status_list(repo)
 
@@ -190,7 +192,7 @@ class BackupToKeybase:
 
                             else:
 
-                                self.logger.info('Changes to {} file(s) will be committed'.format(len(lst_status)))
+                                self.logger.info(f'Changes to {len(lst_status)} file(s) will be committed')
 
                                 # Send mail about deleted files
                                 lst_deleted = [item for item in lst_status if item[0] == 'D']
