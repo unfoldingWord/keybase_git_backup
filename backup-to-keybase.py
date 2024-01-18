@@ -8,12 +8,17 @@ import datetime
 from sendgrid.helpers.mail import Mail, Email, To, Content
 import subprocess
 import ast
+import graphyte
 
 
 class BackupToKeybase:
     def __init__(self):
         # Init logger
         self.logger = self.__init_logger()
+
+        # Init graphite
+        graphite_host = os.getenv('GRAPHITE_HOST')
+        graphyte.init(graphite_host)
 
     def __init_logger(self):
         if os.getenv('STAGE', False) == 'dev':
@@ -29,6 +34,12 @@ class BackupToKeybase:
 
         this_logger = logging.getLogger()
         return this_logger
+
+    def __send_to_graphite(self, key, value):
+        prefix = 'stats.gauges.keybase_backup'
+        full_metric = prefix + "." + key
+
+        graphyte.send(full_metric, value)
 
     def __send_mail_deleted(self, reponame, lst_deleted_files):
         if len(lst_deleted_files) == 0:
@@ -161,6 +172,7 @@ class BackupToKeybase:
         if len(directories) == 0:
             self.logger.warning('Vault path {} appears to be empty'.format(vault_path))
 
+        repo_count = 0
         for reponame in directories:
             full_repo_path = vault_path + "/" + reponame
             # Only non-hidden dirs
@@ -169,6 +181,7 @@ class BackupToKeybase:
                 if os.path.exists(full_repo_path + '/.git'):
                     self.logger.debug('Directory {} appears to be a valid repository'.format(full_repo_path))
                     self.logger.info(f'Processing repository {reponame}')
+                    repo_count += 1
 
                     repo = Repo(full_repo_path)
 
@@ -192,10 +205,15 @@ class BackupToKeybase:
 
                             else:
 
-                                self.logger.info(f'Changes to {len(lst_status)} file(s) will be committed')
+                                changed_files = len(lst_status)
+
+                                self.logger.info(f'Changes to {changed_files} file(s) will be committed')
+                                self.__send_to_graphite(reponame + ".changes_total", changed_files)
 
                                 # Send mail about deleted files
                                 lst_deleted = [item for item in lst_status if item[0] == 'D']
+                                self.__send_to_graphite(reponame + ".changes_deletions", len(lst_deleted))
+
                                 if len(lst_deleted) > 0:
                                     # Send a mail with deleted files
                                     if self.__send_mail_deleted(reponame, lst_deleted) is False:
@@ -231,6 +249,12 @@ class BackupToKeybase:
                                 self.logger.debug('Changelog commit: {}'.format(cmd))
                                 subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
 
+                    else:
+                        # Repo is clean
+                        self.logger.info("Repository is up to date. Skipping...")
+
+        # Send number of checked repos
+        self.__send_to_graphite('repos', repo_count)
 
 load_dotenv()
 obj_btk = BackupToKeybase()
