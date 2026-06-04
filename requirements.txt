@@ -1,8 +1,9 @@
-gitdb==4.0.9
-GitPython==3.1.29
+gitdb==4.0.12
+GitPython==3.1.50
 graphyte==1.7.1
-python-dotenv==0.21.0
+python-dotenv==1.2.2
 python-http-client==3.3.7
-sendgrid==6.9.7
-smmap==5.0.0
-starkbank-ecdsa==2.2.0
+sendgrid==6.12.5
+smmap==5.0.3
+starkbank-ecdsa==2.3.1
+requests==2.34.2

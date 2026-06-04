@@ -9,6 +9,7 @@ from sendgrid.helpers.mail import Mail, Email, To, Content
 import subprocess
 import ast
 import graphyte
+import requests
 
 
 class BackupToKeybase:
@@ -40,6 +41,11 @@ class BackupToKeybase:
         full_metric = prefix + "." + key
 
         graphyte.send(full_metric, value)
+
+    def __notify_healthcheck(self):
+        if os.getenv('HEALTHCHECK_URL', False):
+            url = os.getenv('HEALTHCHECK_URL', '')
+            requests.get(url)
 
     def __send_mail_deleted(self, reponame, lst_deleted_files):
         if len(lst_deleted_files) == 0:
@@ -255,6 +261,9 @@ class BackupToKeybase:
 
         # Send number of checked repos
         self.__send_to_graphite('repos', repo_count)
+
+        # Notify healthcheck
+        self.__notify_healthcheck()
 
 load_dotenv()
 obj_btk = BackupToKeybase()
