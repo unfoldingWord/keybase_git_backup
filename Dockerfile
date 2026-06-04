@@ -1,4 +1,4 @@
-FROM keybaseio/client:6.2.4-python
+FROM keybaseio/client:6.6.3-python
 WORKDIR /app
 
 # Copy in backup script
