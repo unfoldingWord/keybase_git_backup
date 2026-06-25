@@ -194,6 +194,9 @@ class BackupToKeybase:
                     # Add the working dir as a safe directory
                     repo.git.config('--global', '--add', 'safe.directory', full_repo_path)
 
+                    # Set reconciliation strategy
+                    repo.git.config('pull.rebase', 'false')
+
                     if repo.is_dirty(untracked_files=True):
 
                         self.logger.info(f'Repo \'{reponame}\' has changes and needs a commit')
