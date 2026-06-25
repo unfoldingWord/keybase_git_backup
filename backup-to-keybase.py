@@ -191,6 +191,9 @@ class BackupToKeybase:
 
                     repo = Repo(full_repo_path)
 
+                    # Add the working dir as a safe directory
+                    repo.git.config('--global', '--add', 'safe.directory', full_repo_path)
+
                     if repo.is_dirty(untracked_files=True):
 
                         self.logger.info(f'Repo \'{reponame}\' has changes and needs a commit')
